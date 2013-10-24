@@ -9,18 +9,25 @@ int main() {
 	
 	char buffer[128];
 	
-	for(int mode=0; mode<2; mode++) {
-	switch(mode) {
-		case 0:
-		print(buffer, sprintf(buffer, "round %i, IEEE mode\n", mode));
-		asm("mtfsb0 29;");
-		break;
-		
-		case 1:
-		print(buffer, sprintf(buffer, "round %i, non-IEEE mode\n", mode));
+	for(int mode=0; mode<8; mode++) {
+	
+	print(buffer, sprintf(buffer, "round %i, non-ieee %i, rounding %i\n", mode, mode & 1, mode>>1));
+	
+	// non-ieee mode
+	if (mode & 1)
 		asm("mtfsb1 29;");
-		break;
-	}
+	else 
+		asm("mtfsb0 29;");
+	
+	// rounding
+	if (mode & 2)
+		asm("mtfsb1 30;");
+	else 
+		asm("mtfsb0 30;");
+	if (mode & 4)
+		asm("mtfsb1 31;");
+	else 
+		asm("mtfsb0 31;");
 	
 	// float addition
 	{
