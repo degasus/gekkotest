@@ -6,13 +6,13 @@
 
 int main() {
 	network_init();
-	
+
 	char buffer[128];
-	
+
 	for(int mode=0; mode<8; mode++) {
-	
+
 	print(buffer, sprintf(buffer, "round %i, non-ieee %i, rounding %i\n", mode, mode & 1, mode>>1));
-	
+
 	// non-ieee mode
 	if (mode & 1)
 		asm("mtfsb1 29;");
@@ -28,7 +28,7 @@ int main() {
 		asm("mtfsb1 31;");
 	else 
 		asm("mtfsb0 31;");
-	
+
 	// float addition
 	{
 		float a = 1.0;
@@ -43,7 +43,7 @@ int main() {
 				print(buffer, sprintf(buffer, "float add step %i, result %g / %x\n", i, a, *(u32*)&a));
 		}
 	}
-	
+
 	// double addition
 	{
 		double a = 1.0;
@@ -58,7 +58,7 @@ int main() {
 				print(buffer, sprintf(buffer, "double add step %i, result %g / %llx\n", i, a, *(u64*)&a));
 		}
 	}
-	
+
 	// ps addition
 	{
 		float a[] = {1.0, 2.0};
@@ -82,7 +82,19 @@ int main() {
 				print(buffer, sprintf(buffer, "ps add step %i, result %g / %x %g / %x\n", i, a[0], *(u32*)&a[0], a[1], *(u32*)&a[1]));
 		}
 	}
-	
+
+	// float division
+	{
+		float a = 123456789.4321;
+		float b = 1.79685746;
+		for(int i=0; i<256; i++) {
+			// a /= b
+			asm("fdivs %0, %1, %2;" : "=f"(a) : "f"(a), "f"(b));
+			if(i == 16 || i == 31 || DEBUG_ALL)
+				print(buffer, sprintf(buffer, "float div step %i, result %g / %x\n", i, a, *(u32*)&a));
+		}
+	}
+
 	// float addition 2
 	{
 		float a = 1.0;
@@ -99,7 +111,7 @@ int main() {
 				print(buffer, sprintf(buffer, "float add 2 step %i, result %g / %x\n", i, a, *(u32*)&a));
 		}
 	}
-	
+
 	// double addition 2
 	{
 		double a = 1.0;
@@ -116,7 +128,7 @@ int main() {
 				print(buffer, sprintf(buffer, "double add 2 step %i, result %g / %llx\n", i, a, *(u64*)&a));
 		}
 	}
-	
+
 	// ps addition 2
 	{
 		float a[] = {1.0, 2.0};
@@ -149,8 +161,8 @@ int main() {
 				print(buffer, sprintf(buffer, "ps add 2 step %i, result %g / %x %g / %x\n", i, a[0], *(u32*)&a[0], a[1], *(u32*)&a[1]));
 		}
 	}
-	
+
 	};
-	
+
 	network_shutdown();
 }
