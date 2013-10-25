@@ -1,4 +1,5 @@
 #include <network.h>
+#include <stdio.h>
 
 #include "gekkotest.h"
 
@@ -6,8 +7,9 @@
 static int client_socket;
 static int server_socket;
 
+char *buffer;
 
-void print(const char* str, u32 len) {
+void network_print(const char* str, u32 len) {
 	net_send(client_socket, str, len, 0);
 }
 
@@ -28,9 +30,12 @@ void network_init() {
 	struct sockaddr_in client_info;
 	socklen_t ssize = sizeof(client_info);
 	client_socket = net_accept(server_socket, (struct sockaddr*)&client_info, &ssize);
+	
+	buffer = new char[128];
 }
 
 void network_shutdown() {
 	net_close(client_socket);
 	net_close(server_socket);
+	delete [] buffer;
 }
