@@ -23,7 +23,8 @@ void network_init() {
 	net_init();
 	
 	server_socket = net_socket(AF_INET, SOCK_STREAM, 0);
-	net_setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, NULL, sizeof(int));
+	int yes = 1;
+	net_setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
 	while(net_bind(server_socket, (struct sockaddr*)&my_name, sizeof(my_name)) < 0);
 	net_listen(server_socket, 0);
 	
