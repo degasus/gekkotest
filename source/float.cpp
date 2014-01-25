@@ -15,7 +15,7 @@ inline static u64 fti(double f) {
 	return u.i;
 }
 
-void float_run_test() {
+static void float_arith_test() {
 	// float addition
 	{
 		float a = 1.0;
@@ -150,8 +150,37 @@ void float_run_test() {
 	}
 }
 
+static void float_memcpy_test() {
+	// turn on non-IEEE mode:
+	asm("mtfsb1 29;");
+
+        // to me, dealing with big endian is like leaving plato's cave :|
+	float input = *((float *) &"\x00\x00\x00\x01");
+	float output = 1.234567890;
+	if (fti(input) != 1) {
+		print("FAIL: input value is not a denormal float\n");
+	}
+	print("input:  0x%x\n", fti(input));
+	asm volatile(
+		"nop;nop;nop;"
+		"lfs 0, %[input];"
+		"stfs 0, %[output];"
+		"nop;nop;nop;"
+		: [output]"=m"(output)
+		: [input]"m"(input)
+	);
+	print("output: 0x%x\n", fti(output));
+	if (fti(output) == 1) {
+		print("PASS: float-based memcpy in non-IEEE mode\n");
+	} else {
+		print("FAIL: copying a denormal float in non-IEEE mode with lfs/stfs modifies its value:\n"
+		      "expected 0x%x, got 0x%x\n", fti(input), fti(output));
+	}
+}
+
 void float_run_tests() {
 	print("Begin floating point tests\n");
+	/*
 	for(int mode=0; mode<8; mode++) {
 
 		print("round %i, non-ieee %i, rounding %i\n", mode, mode & 1, mode>>1);
@@ -172,7 +201,9 @@ void float_run_tests() {
 		else 
 			asm("mtfsb0 31;");
 		
-		float_run_test();
+		float_arith_test();
 	}
+	*/
+	float_memcpy_test();
 	print("finish floating point tests\n");
 }
