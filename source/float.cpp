@@ -152,30 +152,43 @@ static void float_arith_test() {
 
 static void float_memcpy_test() {
 	// turn on non-IEEE mode:
-	asm("mtfsb1 29;");
+	asm("mtfsb1 29");
 
-        // to me, dealing with big endian is like leaving plato's cave :|
-	float input = *((float *) &"\x00\x00\x00\x01");
-	float output = 1.234567890;
-	if (fti(input) != 1) {
-		print("FAIL: input value is not a denormal float\n");
-	}
-	print("input:  0x%x\n", fti(input));
-	asm volatile(
-		"nop;nop;nop;"
-		"lfs 0, %[input];"
-		"stfs 0, %[output];"
-		"nop;nop;nop;"
-		: [output]"=m"(output)
-		: [input]"m"(input)
-	);
-	print("output: 0x%x\n", fti(output));
-	if (fti(output) == 1) {
-		print("PASS: float-based memcpy in non-IEEE mode\n");
-	} else {
-		print("FAIL: copying a denormal float in non-IEEE mode with lfs/stfs modifies its value:\n"
-		      "expected 0x%x, got 0x%x\n", fti(input), fti(output));
-	}
+        // all the NaNs are in Intel encoding since that is where things could go wrong
+        u32 numbers[] = {
+            0xff800000, // -infinity
+            0x807fffff, // smallest denormal
+            0x80000001, // largest negative denormal
+            0x80000000, // -0
+            0x00000000, // +0
+            0x00000001, // smallest positive denormal
+            0x007fffff, // largest denormal
+            0x7f800000, // +infinity
+            0x7fc00001, // +QNaN
+            0x7f800001, // +SNaN
+            0xffc00000, // indefinite value (special QNaN)
+            0xffc00001, // -QNaN
+            0xff800001, // -SNaN
+            0xffffffff, // all 1s (NaN)
+        };
+
+        size_t i;
+        for (i = 0; i < sizeof(numbers) / sizeof(numbers[0]); i++) {
+                u32 input = numbers[i];
+                u32 output = 0x12345678;
+                asm volatile(
+                        "lfs 0, %[input];"
+                        "stfs 0, %[output];"
+                        : [output]"=m"(output)
+                        : [input]"m"(input)
+                );
+                if (output == input) {
+                        print("PASS: 0x%08x\n", input);
+                } else {
+                        print("FAIL: copying a specific float in non-IEEE mode with lfs/stfs modifies its value:\n"
+                              "expected 0x%08x, got 0x%08x\n", input, output);
+                }
+        }
 }
 
 void float_run_tests() {
