@@ -176,10 +176,11 @@ static void float_memcpy_test() {
         for (i = 0; i < sizeof(numbers) / sizeof(numbers[0]); i++) {
                 u32 input = numbers[i];
                 u32 output = 0x12345678;
+                float pseudovar;
                 asm volatile(
-                        "lfs 0, %[input];"
-                        "stfs 0, %[output];"
-                        : [output]"=m"(output)
+                        "lfs %[temp], %[input];"
+                        "stfs %[temp], %[output];"
+                        : [output]"=m"(output), [temp]"=f"(pseudovar)
                         : [input]"m"(input)
                 );
                 if (output == input) {
